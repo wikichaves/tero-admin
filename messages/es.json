@@ -1,4 +1,10 @@
 {
+  "cameraForm": {
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saved": "Cambios guardados.",
+    "error": "No se pudo guardar la cámara. Tus cambios siguen en el formulario; volvé a intentar."
+  },
   "common": {
     "appName": "tero.bot",
     "tagline": "Operativa para alquileres temporarios.",
@@ -20,6 +26,7 @@
     "energy": "Energía",
     "rooms": "Ambientes",
     "config": "Configuración",
+    "cameras": "Cámaras",
     "properties": "Propiedades",
     "users": "Usuarios",
     "tuyaDevices": "Tuya devices",

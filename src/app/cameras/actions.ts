@@ -31,7 +31,14 @@ export async function saveCamera(formData: FormData) {
   };
   const id = value(formData, "id");
   const db = createAdminClient();
-  const result = id ? await db.from("property_cameras").update(payload).eq("id", id) : await db.from("property_cameras").insert(payload);
+  if (id) {
+    const { data: camera, error } = await db.from("property_cameras").select("property_id").eq("id", id).single();
+    if (error || !camera) throw new Error("No se pudo guardar la cámara.");
+    await allowedProperty(camera.property_id);
+  }
+  const result = id
+    ? await db.from("property_cameras").update(payload).eq("id", id).select("id").single()
+    : await db.from("property_cameras").insert(payload).select("id").single();
   if (result.error) throw new Error("No se pudo guardar la cámara.");
   revalidatePath("/cameras");
 }

@@ -152,7 +152,6 @@ export async function SiteHeader({ profile }: { profile: Profile }) {
           { href: "/energy", label: t("energy") },
           { href: "/bills", label: t("bills") },
           { href: "/expenses", label: "Gastos" },
-          { href: "/cameras", label: "Cámaras" },
           { href: "/leads", label: "Leads" },
           // WIK-108: WhatsApp se movió al submenú Configuración (definido
           // abajo) — antes vivía como leaf operacional para admin.
@@ -164,6 +163,7 @@ export async function SiteHeader({ profile }: { profile: Profile }) {
       ? {
           label: t("config"),
           items: [
+            { href: "/cameras", label: t("cameras") },
             { href: "/admin/users", label: t("users") },
             { href: "/admin/tuya/lock", label: t("locks") },
             { href: "/admin/alarms", label: t("alarms") },
@@ -177,7 +177,9 @@ export async function SiteHeader({ profile }: { profile: Profile }) {
             { href: "/admin/whatsapp", label: t("whatsappTemplates") },
           ],
         }
-      : null;
+      : profile.role === "gestor"
+        ? { label: t("config"), items: [{ href: "/cameras", label: t("cameras") }] }
+        : null;
 
   return (
     <>
