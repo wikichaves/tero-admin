@@ -1251,4 +1251,18 @@ create index if not exists leads_country_status_idx on public.leads(country, sta
 alter table public.leads enable row level security;
 drop policy if exists leads_admin_gestor_all on public.leads;
 create policy leads_admin_gestor_all on public.leads for all
-  using (public.current_role() in ('admin', 'gestor'))
+  using (public.current_role() in ('admin', 'gestor'));
+-- ─── Camera snapshots (fotos automáticas desde Home Assistant) ───────────
+-- Un proceso local (tero-cam-sync) saca una foto de cada cámara de Home
+-- Assistant cada pocos minutos y la sube al bucket público 'camera-snapshots'.
+-- `ha_entity_id` mapea la fila con la entidad de HA; `last_snapshot_at` guarda
+-- cuándo se actualizó, para mostrar frescura y romper caché en la UI.
+alter table public.property_cameras
+  add column if not exists ha_entity_id text,
+  add column if not exists last_snapshot_at timestamptz;
+insert into storage.buckets (id, name, public)
+  values ('camera-snapshots', 'camera-snapshots', true)
+  on conflict (id) do update set public = true;
+drop policy if exists camera_snapshots_read on storage.objects;
+create policy camera_snapshots_read on storage.objects
+  for select using (bucket_id = 'camera-snapshots');
