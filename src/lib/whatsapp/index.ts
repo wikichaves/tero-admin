@@ -301,6 +301,26 @@ export async function sendKapsoText(
   to: string,
   text: string,
 ): Promise<{ messageId?: string; raw: unknown }> {
+  return sendKapsoMessage(phoneNumberId, to, { type: "text", text: { body: text } });
+}
+
+export async function sendKapsoImage(
+  phoneNumberId: string,
+  to: string,
+  imageUrl: string,
+  caption: string,
+): Promise<{ messageId?: string; raw: unknown }> {
+  return sendKapsoMessage(phoneNumberId, to, {
+    type: "image",
+    image: { link: imageUrl, caption: caption.slice(0, 1024) },
+  });
+}
+
+async function sendKapsoMessage(
+  phoneNumberId: string,
+  to: string,
+  content: { type: "text"; text: { body: string } } | { type: "image"; image: { link: string; caption: string } },
+): Promise<{ messageId?: string; raw: unknown }> {
   const apiKey = process.env.KAPSO_API_KEY;
   if (!apiKey) {
     throw new Error("KAPSO_API_KEY is not set.");
@@ -315,8 +335,7 @@ export async function sendKapsoText(
     body: JSON.stringify({
       messaging_product: "whatsapp",
       to: to.replace(/^\+/, ""),
-      type: "text",
-      text: { body: text },
+      ...content,
     }),
   });
   const responseText = await res.text();
