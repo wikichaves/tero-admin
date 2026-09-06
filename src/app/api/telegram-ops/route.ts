@@ -3,12 +3,16 @@ import {
   getOpsBotToken,
   getOpsWebhookSecret,
   sendTelegramMessage,
+  sendTelegramPhoto,
+  escapeHtml,
   timingSafeEqual,
   type TelegramUpdate,
 } from "@/lib/telegram";
 import { resolveOpsProfile, opsLocaleOf } from "@/lib/ops-bot/auth";
 import {
   parseOpsCommand,
+  parseCameraCommand,
+  getOpsCameras,
   runOpsCommand,
   opsHelpText,
 } from "@/lib/ops-bot/commands";
@@ -114,6 +118,61 @@ export async function POST(req: NextRequest) {
       parseMode: "HTML",
       text: opsHelpText(locale),
     });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Cámaras: respuesta con FOTOS, se maneja antes del dispatch de texto.
+  const cam = parseCameraCommand(msg.text);
+  if (cam) {
+    const replyTo = chatId === fromId ? undefined : msg.message_id;
+    try {
+      const shots = await getOpsCameras(cam.query);
+      if (shots.length === 0) {
+        await sendTelegramMessage({
+          token,
+          chatId,
+          parseMode: "HTML",
+          replyToMessageId: replyTo,
+          text: cam.query
+            ? locale === "en"
+              ? `No camera matches “${escapeHtml(cam.query)}”.`
+              : `Ninguna cámara coincide con “${escapeHtml(cam.query)}”.`
+            : locale === "en"
+              ? "No camera snapshots available yet."
+              : "Todavía no hay fotos de cámaras disponibles.",
+        });
+        return NextResponse.json({ ok: true });
+      }
+      for (const s of shots) {
+        const age =
+          s.ageMin == null
+            ? ""
+            : s.ageMin < 1
+              ? locale === "en" ? " · just now" : " · recién"
+              : locale === "en" ? ` · ${s.ageMin}m ago` : ` · hace ${s.ageMin} min`;
+        const caption = `📷 <b>${escapeHtml(s.name)}</b> · ${escapeHtml(s.propertyName)}${s.location ? ` · ${escapeHtml(s.location)}` : ""}${age}`;
+        await sendTelegramPhoto({
+          token,
+          chatId,
+          parseMode: "HTML",
+          replyToMessageId: replyTo,
+          photoUrl: `${s.snapshotUrl}?t=${Date.now()}`,
+          caption,
+        });
+      }
+    } catch (err) {
+      console.error("[ops-bot] /camaras error", err);
+      await sendTelegramMessage({
+        token,
+        chatId,
+        parseMode: "HTML",
+        replyToMessageId: replyTo,
+        text:
+          locale === "en"
+            ? "Couldn't load cameras right now."
+            : "No pude cargar las cámaras ahora.",
+      });
+    }
     return NextResponse.json({ ok: true });
   }
 

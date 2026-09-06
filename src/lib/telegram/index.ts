@@ -172,6 +172,53 @@ export async function sendTelegramMessage(opts: {
 }
 
 /**
+ * Manda una foto (por URL) al chat. Telegram baja la URL del lado del server,
+ * así que sirve para snapshots públicos de Supabase. No throws: side-effect.
+ */
+export async function sendTelegramPhoto(opts: {
+  chatId: number | string;
+  photoUrl: string;
+  caption?: string;
+  parseMode?: "HTML" | "MarkdownV2" | "Markdown";
+  replyToMessageId?: number;
+  token?: string | null;
+}): Promise<{ messageId: number } | null> {
+  const token = opts.token ?? getTelegramBotToken();
+  if (!token) {
+    console.error("[telegram] bot token not set");
+    return null;
+  }
+  const body: Record<string, unknown> = {
+    chat_id: opts.chatId,
+    photo: opts.photoUrl,
+  };
+  if (opts.caption) body.caption = opts.caption;
+  if (opts.parseMode) body.parse_mode = opts.parseMode;
+  if (opts.replyToMessageId) body.reply_to_message_id = opts.replyToMessageId;
+
+  try {
+    const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendPhoto`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[telegram] sendPhoto ${res.status}: ${errText}`);
+      return null;
+    }
+    const json = (await res.json()) as {
+      ok: boolean;
+      result?: { message_id: number };
+    };
+    return json.result ? { messageId: json.result.message_id } : null;
+  } catch (e) {
+    console.error("[telegram] sendPhoto exception", e);
+    return null;
+  }
+}
+
+/**
  * Edita el texto de un mensaje existente (WIK-186). Usado para
  * actualizar la UI después de un tap de inline button — ej. cambiar
  * "✅ PR #10 [Mergear] [Stop]" por "🚢 Mergeado en abc1234" sin que el
