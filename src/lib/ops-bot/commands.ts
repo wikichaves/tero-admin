@@ -56,6 +56,7 @@ export function opsHelpText(locale: Locale): string {
     return (
       "<b>Tero Ops</b> — house operations\n\n" +
       "/estado — current temp/humidity/power of the houses\n" +
+      "/camaras [name] — latest camera photos (all, or one by name)\n" +
       "/incidente &lt;text&gt; — report a problem (creates a maintenance task)\n" +
       "/tareas — list pending tasks\n" +
       "/help — this list\n\n" +
@@ -65,11 +66,82 @@ export function opsHelpText(locale: Locale): string {
   return (
     "<b>Tero Ops</b> — operación de las casas\n\n" +
     "/estado — temp/humedad/luz actual de las casas\n" +
+    "/camaras [nombre] — últimas fotos de las cámaras (todas, o una por nombre)\n" +
     "/incidente &lt;texto&gt; — reportar un problema (crea tarea de mantenimiento)\n" +
     "/tareas — listar tareas pendientes\n" +
     "/help — esta lista\n\n" +
     "<i>Las alarmas llegan solas. Acá no hay comandos de código.</i>"
   );
+}
+
+/**
+ * Comando de cámaras (WIK-cams). Separado del union OpsCommand porque su
+ * respuesta son FOTOS (sendPhoto), no texto — el webhook lo intercepta antes
+ * de runOpsCommand. `/camaras` = todas; `/camaras esquina` = filtra por nombre
+ * de cámara o de propiedad.
+ */
+export function parseCameraCommand(
+  text: string | null | undefined,
+): { query: string } | null {
+  if (!text) return null;
+  const cleaned = text.replace(/^(\/[a-zA-Z_]+)@\S+/, "$1").trim();
+  const m = cleaned.match(/^\/?(c[aá]maras?|cams?)\b\s*([\s\S]*)$/i);
+  if (!m) return null;
+  return { query: m[2].trim() };
+}
+
+export type OpsCameraShot = {
+  name: string;
+  propertyName: string;
+  location: string | null;
+  snapshotUrl: string;
+  ageMin: number | null;
+};
+
+/**
+ * Últimas fotos de las cámaras activas con snapshot. `query` (opcional) filtra
+ * por nombre de cámara o de propiedad (contains, case-insensitive).
+ */
+export async function getOpsCameras(query?: string): Promise<OpsCameraShot[]> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("property_cameras")
+    .select("name, location, snapshot_url, last_snapshot_at, is_active, property:properties(name)")
+    .eq("is_active", true)
+    .not("snapshot_url", "is", null)
+    .order("name", { ascending: true });
+  if (error) {
+    console.error("[ops-bot] /camaras failed:", error.message);
+    throw error;
+  }
+  const rows = (data ?? []) as Array<{
+    name: string;
+    location: string | null;
+    snapshot_url: string;
+    last_snapshot_at: string | null;
+    property: { name: string } | { name: string }[] | null;
+  }>;
+  const q = (query ?? "").trim().toLowerCase();
+  return rows
+    .map((r) => {
+      const prop = Array.isArray(r.property) ? r.property[0] : r.property;
+      const propertyName = prop?.name ?? "—";
+      const ageMin = r.last_snapshot_at
+        ? Math.max(0, Math.round((Date.now() - new Date(r.last_snapshot_at).getTime()) / 60000))
+        : null;
+      return {
+        name: r.name,
+        propertyName,
+        location: r.location,
+        snapshotUrl: r.snapshot_url,
+        ageMin,
+      };
+    })
+    .filter((c) =>
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.propertyName.toLowerCase().includes(q),
+    );
 }
 
 /**
