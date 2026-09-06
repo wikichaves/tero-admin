@@ -1,4 +1,10 @@
 {
+  "cameraForm": {
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Changes saved.",
+    "error": "Could not save the camera. Your changes are still in the form; please try again."
+  },
   "common": {
     "appName": "tero.bot",
     "tagline": "Operations for short-term rentals.",
@@ -20,6 +26,7 @@
     "energy": "Energy",
     "rooms": "Rooms",
     "config": "Settings",
+    "cameras": "Cameras",
     "properties": "Properties",
     "users": "Users",
     "tuyaDevices": "Tuya devices",
