@@ -30,7 +30,7 @@ export default async function CamerasPage() {
 }
 
 function CameraCard({ camera, properties }: { camera: CameraWithProperty; properties: { id: string; name: string }[] }) {
-  return <Card><CardHeader className="pb-3"><div className="flex items-start justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><Camera className="size-5" />{camera.name}</CardTitle><CardDescription>{camera.property?.name}{camera.location ? ` · ${camera.location}` : ""}</CardDescription></div>{camera.access_url && <Button size="sm" variant="outline" render={<a href={camera.access_url} target="_blank" rel="noreferrer" />}><ExternalLink className="size-4" /> Abrir</Button>}</div></CardHeader><CardContent className="grid gap-3 text-sm"><p className="text-muted-foreground">{camera.provider}{camera.stream_url ? " · stream configurado" : " · acceso por app/link"}</p>{camera.notes && <p>{camera.notes}</p>}<details><summary className="cursor-pointer text-muted-foreground hover:text-foreground">Editar</summary><form action={saveCamera} className="mt-4 grid gap-4 rounded-lg bg-muted/40 p-4"><input type="hidden" name="id" value={camera.id} /><CameraFields camera={camera} properties={properties} /><Button className="w-fit" type="submit" size="sm">Guardar cambios</Button></form></details><form action={deleteCamera}><input type="hidden" name="id" value={camera.id} /><input type="hidden" name="property_id" value={camera.property_id} /><Button type="submit" size="sm" variant="ghost" className="w-fit text-destructive hover:text-destructive">Eliminar</Button></form></CardContent></Card>;
+  return <Card><CardHeader className="pb-3"><div className="flex items-start justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><Camera className="size-5" />{camera.name}</CardTitle><CardDescription>{camera.property?.name}{camera.location ? ` · ${camera.location}` : ""}</CardDescription></div>{camera.access_url && <Button size="sm" variant="outline" render={<a href={camera.access_url} target="_blank" rel="noreferrer" />}><ExternalLink className="size-4" /> Abrir</Button>}</div></CardHeader><CardContent className="grid gap-3 text-sm">{camera.snapshot_url && <div className="overflow-hidden rounded-lg border border-border bg-muted"><img src={`${camera.snapshot_url}?v=${encodeURIComponent(camera.last_snapshot_at ?? "")}`} alt={`Última foto de ${camera.name}`} className="aspect-video w-full object-cover" /></div>}<p className="text-muted-foreground">{camera.provider}{camera.last_snapshot_at ? ` · foto ${relTime(camera.last_snapshot_at)}` : camera.stream_url ? " · stream configurado" : " · acceso por app/link"}</p>{camera.notes && <p>{camera.notes}</p>}<details><summary className="cursor-pointer text-muted-foreground hover:text-foreground">Editar</summary><form action={saveCamera} className="mt-4 grid gap-4 rounded-lg bg-muted/40 p-4"><input type="hidden" name="id" value={camera.id} /><CameraFields camera={camera} properties={properties} /><Button className="w-fit" type="submit" size="sm">Guardar cambios</Button></form></details><form action={deleteCamera}><input type="hidden" name="id" value={camera.id} /><input type="hidden" name="property_id" value={camera.property_id} /><Button type="submit" size="sm" variant="ghost" className="w-fit text-destructive hover:text-destructive">Eliminar</Button></form></CardContent></Card>;
 }
 
 function CameraFields({ properties, camera }: { properties: { id: string; name: string }[]; camera?: PropertyCamera }) {
@@ -38,3 +38,12 @@ function CameraFields({ properties, camera }: { properties: { id: string; name: 
 }
 
 function Field({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) { return <div className="grid gap-2"><Label>{label}</Label><Input {...props} /></div>; }
+
+function relTime(iso: string) {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return "recién";
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  return `hace ${Math.round(hours / 24)} d`;
+}
