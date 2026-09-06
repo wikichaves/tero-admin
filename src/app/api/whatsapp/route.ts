@@ -5,6 +5,7 @@ import {
   normalizePhone,
   persistMessage,
   sendKapsoText,
+  sendKapsoImage,
   sendTypingIndicator,
   upsertConversation,
 } from "@/lib/whatsapp";
@@ -23,6 +24,9 @@ import { APP_NAME } from "@/lib/brand";
 import { createExpenseFromWhatsApp, looksLikeCreateExpenseCommand } from "@/lib/expenses/whatsapp";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locales";
 import type { Profile } from "@/lib/types";
+import { getAllowedPropertyIds } from "@/lib/auth/scope";
+import { getCameraSnapshots, parseCameraRequest } from "@/lib/cameras/snapshots";
+import { tr } from "@/lib/i18n/messages";
 
 /**
  * Webhook receiver for Kapso (BSP wrapper around Meta WhatsApp Cloud API).
@@ -705,6 +709,55 @@ async function autoReply(opts: {
   }
 
   // Try to handle as a regular command (consumo, tareas, ayuda).
+  const cameraRequest = opts.messageType === "text" ? parseCameraRequest(opts.messageBody) : null;
+  if (cameraRequest) {
+    const profile = await getProfile();
+    const locale = await getLocale();
+    const reply = async (text: string) => sendAndPersist({
+      phoneNumberId: opts.phoneNumberId,
+      peer: opts.peer,
+      conversationId: opts.conversationId,
+      text,
+    });
+    if (!profile || !["admin", "gestor"].includes(profile.role)) {
+      await reply(await tr(locale, "whatsapp.cameras.denied"));
+      return;
+    }
+    try {
+      const allowedIds = await getAllowedPropertyIds(profile);
+      const shots = await getCameraSnapshots(cameraRequest.query, allowedIds);
+      if (!shots.length) {
+        await reply(await tr(locale, "whatsapp.cameras.empty"));
+        return;
+      }
+      let failures = 0;
+      for (const shot of shots) {
+        const age = shot.ageMinutes === null
+          ? await tr(locale, "whatsapp.cameras.unknownAge")
+          : await tr(locale, "whatsapp.cameras.age", { minutes: shot.ageMinutes });
+        const caption = ["📷 " + shot.name, shot.propertyName, shot.location, age].filter(Boolean).join(" · ").slice(0, 1024);
+        try {
+          const { messageId } = await sendKapsoImage(opts.phoneNumberId, opts.peer, shot.url, caption);
+          await persistMessage({
+            conversation_id: opts.conversationId,
+            external_id: messageId ?? null,
+            direction: "outbound",
+            type: "image",
+            body: caption,
+            media_url: shot.url,
+            status: "sent",
+          });
+        } catch {
+          failures += 1;
+        }
+      }
+      if (failures) await reply(await tr(locale, "whatsapp.cameras.failed"));
+    } catch {
+      await reply(await tr(locale, "whatsapp.cameras.failed"));
+    }
+    return;
+  }
+
   const command = parseCommand(opts.messageBody);
 
   // WIK-278: activación de operador. El operador nuevo abre la ventana de 24h

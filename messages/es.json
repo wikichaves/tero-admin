@@ -504,6 +504,14 @@
     }
   },
   "whatsapp": {
+    "cameras": {
+      "help": "*Cámaras* (admin/gestor)\n• _camaras_ — últimas fotos de tus cámaras\n• _camaras <nombre>_ — filtrar por cámara o propiedad\nEj: _camaras esquina_\nSon fotos guardadas, no video en vivo; cada una indica su antigüedad.",
+      "denied": "Las cámaras están disponibles solo para administradores y gestores con acceso a la propiedad.",
+      "empty": "No encontré fotos de cámaras disponibles para ese filtro en tus propiedades.",
+      "age": "Última foto: hace {minutes} min",
+      "unknownAge": "Última foto: fecha desconocida",
+      "failed": "No pude enviar todas las fotos. Podés ver las últimas capturas en https://tero.bot/cameras o intentar de nuevo."
+    },
     "help": {
       "headerFull": "*{appName} Comandos*\n\n*Consumo* (admin/gestor)\n• _consumo_ — resumen total (hoy + 7 días)\n• _consumo <nombre>_ — filtrar por propiedad\nEj: _consumo merced_ o _consumo 14 julio_\n\n*Ambientes* (admin/gestor)\n• _ambientes_ — T/H promedio últimas 24 h por ambiente\n\n*Tareas*\n• _tareas_ — tus tareas pendientes\n• _tarea <descripción>_ — crear una tarea nueva\nEj: _tarea se rompió la canilla del baño_\n• mandá una *foto* (con o sin caption) → crea tarea automática\n\n*Ayuda*\n• _ayuda_ — esta lista",
       "headerStaff": "*{appName} Comandos*\n\n*Tareas*\n• _tareas_ — tus tareas pendientes\n• _tarea <descripción>_ — crear una tarea (te queda asignada)\nEj: _tarea se rompió la canilla del baño_\n• mandá una *foto* → crea tarea automática\n\n*Ayuda*\n• _ayuda_ — esta lista",

@@ -504,6 +504,14 @@
     }
   },
   "whatsapp": {
+    "cameras": {
+      "help": "*Cameras* (admin/manager)\n• _camaras_ — latest photos from your cameras\n• _camaras <name>_ — filter by camera or property\nExample: _camaras esquina_\nThese are saved photos, not live video; each shows its age.",
+      "denied": "Cameras are available only to admins and managers with access to the property.",
+      "empty": "No camera photos are available for that filter in your properties.",
+      "age": "Latest photo: {minutes} min ago",
+      "unknownAge": "Latest photo: date unknown",
+      "failed": "Some photos could not be sent. View the latest snapshots at https://tero.bot/cameras or try again."
+    },
     "help": {
       "headerFull": "*{appName} Commands*\n\n*Consumption* (admin/manager)\n• _consumo_ — total summary (today + 7 days)\n• _consumo <name>_ — filter by property\nEx: _consumo merced_ or _consumo 14 julio_\n\n*Rooms* (admin/manager)\n• _ambientes_ — avg T/H over the last 24 h per room\n\n*Tasks*\n• _tareas_ — your pending tasks\n• _tarea <description>_ — create a new task\nEx: _tarea the bathroom tap broke_\n• send a *photo* (with or without caption) → auto-creates a task\n\n*Help*\n• _ayuda_ — this list",
       "headerStaff": "*{appName} Commands*\n\n*Tasks*\n• _tareas_ — your pending tasks\n• _tarea <description>_ — create a task (assigned to you)\nEx: _tarea the bathroom tap broke_\n• send a *photo* → auto-creates a task\n\n*Help*\n• _ayuda_ — this list",

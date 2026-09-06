@@ -33,7 +33,7 @@ export type ParsedCommand =
 // como fallback ("whatsapp.help.headerFull"). `tr()` lee el JSON
 // directo + hace template substitution, sin magia.
 async function helpTextFull(locale: Locale): Promise<string> {
-  return tr(locale, "whatsapp.help.headerFull", { appName: APP_NAME });
+  return (await tr(locale, "whatsapp.help.headerFull", { appName: APP_NAME })) + "\n\n" + (await tr(locale, "whatsapp.cameras.help"));
 }
 
 async function helpTextStaff(locale: Locale): Promise<string> {
